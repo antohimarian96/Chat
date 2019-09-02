@@ -34,6 +34,7 @@ namespace Chat
                 if (count == 0)
                 {
                     OnLeave(this);
+                    //daasdasdasd
                     throw new CantReadException();
                 }
                 readCount += count;
