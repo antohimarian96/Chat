@@ -48,7 +48,7 @@ namespace Tests
             room.Join(firstParticipant);
             room.Join(secondParticipant);
             secondParticipant.Receive();
-            Assert.Throws<ArgumentNullException>(() => secondParticipant.Receive());
+            Assert.Throws<CantReadException>(() => secondParticipant.Receive());
             room.Broadcast(new Message("dan"));
             Assert.Throws<InvalidOperationException> (() => secondMock.CheckWriteMessage("dan\0"));
             Assert.True(firstMock.CheckWriteMessage("dan\0"));

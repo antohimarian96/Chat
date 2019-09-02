@@ -34,6 +34,7 @@ namespace Chat
         {
             participant.OnLeave = Leave;
             participants.Add(participant);
+            participant.Joined = true;
         }
 
         public void Leave(Participant participant)
