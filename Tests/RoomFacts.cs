@@ -13,9 +13,13 @@ namespace Tests
         {
             var firstMock = new MockChannel("ana");
             var secondMock = new MockChannel("are");
+            var firstParticipant = new Participant(firstMock);
+            var secondParticipant = new Participant(secondMock);
+            firstParticipant.Nickname = "a";
+            secondParticipant.Nickname = "b";
             var room = new Room();
-            room.Join(new Participant(firstMock));
-            room.Join(new Participant(secondMock));
+            room.Join(firstParticipant);
+            room.Join(secondParticipant);
             room.Broadcast(new Message("mere"));
             Assert.True(firstMock.CheckWriteMessage("mere\0"));
             Assert.True(secondMock.CheckWriteMessage("mere\0"));
@@ -52,6 +56,25 @@ namespace Tests
             room.Broadcast(new Message("dan"));
             Assert.Throws<InvalidOperationException> (() => secondMock.CheckWriteMessage("dan\0"));
             Assert.True(firstMock.CheckWriteMessage("dan\0"));
+        }
+
+        [Fact]
+        public void ParticipantCantJoinBecauseNicknameAlreadyExistInRoom()
+        {
+            var mock = new MockChannel("ion\0");
+            var firstParticipant = new Participant(mock);
+            var secondParticipant = new Participant(mock);
+            var thirdParticipant = new Participant(mock);
+            firstParticipant.Nickname = "alex";
+            secondParticipant.Nickname = "dan";
+            thirdParticipant.Nickname = "alex";
+            var room = new Room();
+            room.Join(firstParticipant);
+            room.Join(secondParticipant);
+            room.Join(thirdParticipant);
+            Assert.True(firstParticipant.Joined);
+            Assert.True(secondParticipant.Joined);
+            Assert.False(thirdParticipant.Joined);
         }
     }
 }

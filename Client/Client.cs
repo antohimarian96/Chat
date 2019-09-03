@@ -16,6 +16,23 @@ namespace Client
 
             Participant participant = new Participant(new TCPChannel(client.GetStream()));
 
+            while (participant.Nickname == null)
+            {
+                Console.WriteLine("Nickname: ");
+                string nickname = Console.ReadLine();
+                participant.Send(new Message(nickname));
+                string confirmationMessage = participant.Receive().ToString();
+                if (confirmationMessage == "Yes")
+                {
+                    participant.Nickname = nickname;
+                    Console.WriteLine("Accepted");
+                }
+                else
+                {
+                    Console.WriteLine("Try again");
+                }
+            }
+
             Message message = new Message(Console.ReadLine());
             participant.Send(message);
 

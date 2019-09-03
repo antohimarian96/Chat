@@ -33,8 +33,11 @@ namespace Chat
         public void Join(Participant participant)
         {
             participant.OnLeave = Leave;
-            participants.Add(participant);
-            participant.Joined = true;
+            if (CheckNickname(participant.Nickname))
+            {
+                participants.Add(participant);
+                participant.Joined = true;
+            }
         }
 
         public void Leave(Participant participant)
@@ -42,5 +45,14 @@ namespace Chat
             participants.Remove(participant);
         }
 
+        private bool CheckNickname(string nickname)
+        {
+            foreach(var participant in participants)
+            {
+                if (participant.Nickname == nickname)
+                    return false;
+            }
+            return true;
+        }
     }
 }

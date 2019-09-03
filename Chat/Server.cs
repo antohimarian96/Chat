@@ -31,7 +31,15 @@ namespace Chat
         private static void ConnectClient(TcpClient client)
         {
             var participant = new Participant(new TCPChannel(client.GetStream()));
-            room.Join(participant);
+            while (!participant.Joined)
+            {
+                participant.Nickname = participant.Receive().ToString();
+                room.Join(participant);
+                if (participant.Joined)
+                    participant.Send(new Message("Yes"));
+                else
+                    participant.Send(new Message("No"));
+            }
             Message message = participant.Receive();
             room.Broadcast(message);
         }

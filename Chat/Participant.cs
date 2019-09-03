@@ -11,6 +11,7 @@ namespace Chat
         private int readCount = 0;
         private byte[] readBuffer = new byte[255];
         public bool Joined { get; set; }
+        public string Nickname { get; set; }
 
         public Participant(IChannel channel)
         {
@@ -40,7 +41,6 @@ namespace Chat
                 }
                 readCount += count;
             }
-
             return GetMessage(end);
         }
 
