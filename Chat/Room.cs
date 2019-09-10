@@ -7,11 +7,12 @@ namespace Chat
 {
     public class Room
     {
-        private List<Participant> participants;
+        private SafeList<Participant> participants;
+        private readonly object lockObject = new object();
 
         public Room()
         {
-            participants = new List<Participant>();
+            participants = new SafeList<Participant>();
         }
 
         public void Broadcast(Message message)
@@ -23,26 +24,28 @@ namespace Chat
                 {
                     participant.Send(message);
                 }
-                catch(System.IO.IOException)
+                catch (System.IO.IOException)
                 {
                     Leave(participant);
                 }
             }
         }
 
-        public void Join(Participant participant)
+        public bool Join(Participant participant)
         {
-            participant.OnLeave = Leave;
             if (CheckNickname(participant.Nickname))
             {
+                Broadcast(new Message(participant.Nickname + " has joined"));
+                participant.OnLeave = Leave;
                 participants.Add(participant);
-                participant.Joined = true;
+                return true;
             }
+            return false;
         }
 
         public void Leave(Participant participant)
         {
-            participants.Remove(participant);
+             participants.Remove(participant);
         }
 
         private bool CheckNickname(string nickname)

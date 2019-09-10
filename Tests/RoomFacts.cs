@@ -21,7 +21,7 @@ namespace Tests
             room.Join(firstParticipant);
             room.Join(secondParticipant);
             room.Broadcast(new Message("mere"));
-            Assert.True(firstMock.CheckWriteMessage("mere\0"));
+            Assert.True(firstMock.CheckWriteMessage("b has joined\0"));
             Assert.True(secondMock.CheckWriteMessage("mere\0"));
         }
 
@@ -69,12 +69,10 @@ namespace Tests
             secondParticipant.Nickname = "dan";
             thirdParticipant.Nickname = "alex";
             var room = new Room();
-            room.Join(firstParticipant);
-            room.Join(secondParticipant);
-            room.Join(thirdParticipant);
-            Assert.True(firstParticipant.Joined);
-            Assert.True(secondParticipant.Joined);
-            Assert.False(thirdParticipant.Joined);
+            Assert.True(room.Join(firstParticipant));
+            Assert.True(room.Join(secondParticipant));
+            Assert.False(room.Join(thirdParticipant));
+           
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using Chat;
 
 namespace Client
@@ -15,10 +16,17 @@ namespace Client
             Console.WriteLine("Connected");
 
             Participant participant = new Participant(new TCPChannel(client.GetStream()));
+            ConnectClient(participant);
 
+            BeginWrite(participant);
+            BeginReceive(participant);
+        }
+
+        private static void ConnectClient(Participant participant)
+        {
             while (participant.Nickname == null)
             {
-                Console.WriteLine("Nickname: ");
+                Console.Write("Nickname: ");
                 string nickname = Console.ReadLine();
                 participant.Send(new Message(nickname));
                 string confirmationMessage = participant.Receive().ToString();
@@ -32,22 +40,37 @@ namespace Client
                     Console.WriteLine("Try again");
                 }
             }
+        }
 
-            Message message = new Message(Console.ReadLine());
-            participant.Send(message);
-
-            try
+        private static void BeginReceive(Participant participant)
+        {
+            new Thread(() =>
             {
                 while (true)
                 {
-                    Console.WriteLine(participant.Receive());
+                    try
+                    {
+                        Console.WriteLine(participant.Receive());
+                    }
+                    catch (System.IO.IOException)
+                    {
+                        Console.WriteLine("Server offline");
+                        Console.ReadLine();
+                    }
                 }
-            }
-            catch(System.IO.IOException)
+            }).Start();
+        }
+
+        private static void BeginWrite(Participant participant)
+        {
+            new Thread(() =>
             {
-                Console.WriteLine("Server offline");
-                Console.ReadLine();
-            }
+                while (true) 
+                {
+                    Message message = new Message(Console.ReadLine());
+                    participant.Send(message);
+                }
+            }).Start();
         }
     }
 }

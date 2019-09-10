@@ -10,13 +10,14 @@ namespace Chat
         private readonly IChannel channel;
         private int readCount = 0;
         private byte[] readBuffer = new byte[255];
-        public bool Joined { get; set; }
-        public string Nickname { get; set; }
+        
 
         public Participant(IChannel channel)
         {
             this.channel = channel;
         }
+
+        public string Nickname { get; set; }
         public Action<Participant> OnLeave { get; set; }
 
         public void Send(Message message)
@@ -35,8 +36,7 @@ namespace Chat
                 int count = channel.Read(readBuffer, readCount, readBuffer.Length - readCount);
                 if (count == 0)
                 {
-                    if(Joined)
-                    OnLeave(this);
+                    OnLeave?.Invoke(this);
                     throw new CantReadException();
                 }
                 readCount += count;
