@@ -18,7 +18,15 @@ namespace Chat
 
         public int Read(byte[] buffer, int start, int receiveBufferSize)
         {
-            if (!readList.TryDequeue(out string next)) return 0;
+            string next;
+            try
+            {
+                next = readList.Dequeue();
+            }
+            catch (InvalidOperationException)
+            {
+                return 0;
+            }
             Encoding.Default.GetBytes(next).ToArray().CopyTo(buffer, start);
             return receiveBufferSize < next.Length ? receiveBufferSize : next.Length;
         }

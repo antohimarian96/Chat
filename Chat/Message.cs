@@ -19,7 +19,7 @@ namespace Chat
         public byte[] ToByte()
         {
 
-            return Encoding.Default.GetBytes(text.EndsWith('\0') ? text : text + "\0");
+            return Encoding.Default.GetBytes(text.EndsWith("\0") ? text : text + "\0");
         }
 
         public override string ToString()
