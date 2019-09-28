@@ -38,13 +38,16 @@ namespace Server
             {
                 while (true)
                 {
-                    participant.Nickname = participant.Receive().ToString();
-                    if (room.Join(participant))
-                    {
-                        participant.Send(new Message("Yes"));
-                        break;
-                    }
-                    participant.Send(new Message("No"));
+                   
+                        participant.Nickname = participant.Receive().ToString();
+                        if (room.Join(participant))
+                        {
+                            Console.WriteLine("--" + participant.Nickname + "--");
+                            participant.Send(new Message("Yes"));
+                            break;
+                        }
+                        participant.Send(new Message("No"));
+                   
                 }
                 BroadcastMessage(participant);
             }).Start();

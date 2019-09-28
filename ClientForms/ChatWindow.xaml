@@ -1,0 +1,111 @@
+﻿<Window x:Class="ClientForms.ChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClientForms"
+        mc:Ignorable="d"
+        Title="ChatWindow"
+        Height="450"
+        Width="800"
+        WindowStartupLocation="CenterScreen"
+        KeyDown="EnterKeyPress">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="50" />
+        </Grid.RowDefinitions>
+        <Rectangle Grid.Column="0"
+                   Grid.Row="0">
+            <Rectangle.Fill>
+                <LinearGradientBrush EndPoint="0.5,1"
+                                     StartPoint="0.5,0">
+                    <GradientStop  Color="#FF2281D1" />
+                    <GradientStop  Color="#FF34268A"
+                                   Offset="1" />
+                    <GradientStop  Color="#FF33288B"
+                                   Offset="0.7" />
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+        <Grid Grid.Column="0"
+              Grid.Row="1"
+              Margin="27,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="80" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="1*" />
+            </Grid.RowDefinitions>
+            <TextBox x:Name="messageBox"
+                     TextWrapping="Wrap"
+                     FontSize="15"
+                     Margin="2" />
+            <TextBlock IsHitTestVisible="False"
+                       Text="Enter your message here"
+                       Foreground="DarkGray"
+                       Padding="8,5,0,1">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Text, ElementName=messageBox}"
+                                         Value="">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <Border CornerRadius="10"
+                    Padding="3"
+                    Grid.Column="2"
+                    Margin="3"
+                    Background="#FF2571C4">
+                <Button x:Name="sendButton"
+                        Content="Send"
+                        Background="#FF2571C4"
+                        FontFamily="Segoe UI Semibold"
+                        FontSize="11"
+                        Foreground="White"
+                        Click="Button_Click" />
+            </Border>
+        </Grid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="30" />
+            </Grid.RowDefinitions>
+            <TextBlock x:Name="participantsBox"
+                       Grid.Column="0"
+                       TextWrapping="Wrap"
+                       Margin="30, 30, 20, 1"
+                       Background="White" />
+            <TextBlock x:Name="messageChatBox"
+                       Grid.Column="1"
+                       TextWrapping="Wrap"
+                       Background="White"
+                       Loaded="MessageChatBox_Loaded"
+                       Margin="10, 30, 30, 1" />
+            <TextBlock x:Name="messageIssues"
+                       Visibility="Hidden"
+                       Grid.Column="1"
+                       Grid.Row="1"
+                       Foreground="White"
+                       Margin="10,2,30,1">
+            </TextBlock>
+
+        </Grid>
+    </Grid>
+</Window>
