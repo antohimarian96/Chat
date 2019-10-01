@@ -38,16 +38,17 @@ namespace Server
             {
                 while (true)
                 {
-                   
-                        participant.Nickname = participant.Receive().ToString();
-                        if (room.Join(participant))
-                        {
-                            Console.WriteLine("--" + participant.Nickname + "--");
-                            participant.Send(new Message("Yes"));
-                            break;
-                        }
-                        participant.Send(new Message("No"));
-                   
+
+                    participant.Nickname = participant.Receive().ToString();
+                    if (room.Join(participant))
+                    {
+                        Console.WriteLine("--" + participant.Nickname + "--");
+                        participant.Send(new Message("Yes"));
+                        participant.Send(new Message(room.GetParticipantsNicknames()));
+                        break;
+                    }
+                    participant.Send(new Message("No"));
+
                 }
                 BroadcastMessage(participant);
             }).Start();
@@ -62,10 +63,13 @@ namespace Server
                     Message message = participant.Receive();
                     room.Broadcast(new Message(participant.Nickname + ": " + message));
                 }
-                catch (System.IO.IOException)
+                catch (Exception exception)
                 {
-                    room.Broadcast(new Message(participant.Nickname + " left from chat"));
-                    return;
+                    if (exception is System.IO.IOException || exception is CantReadException)
+                    {
+                        room.Broadcast(new Message(participant.Nickname + " left from chat$2019#$"));
+                        return;
+                    }
                 }
             }
         }

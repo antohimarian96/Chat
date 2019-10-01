@@ -22,10 +22,18 @@ namespace ClientForms
     {
         private Participant participant;
         private TcpClient client;
+        private string nickname;
 
         public LoginWindow()
         {
-            InitializeComponent();
+           InitializeComponent();
+        }
+
+        public LoginWindow(string nickname) : this()
+        {
+            this.nickname = nickname;
+            if (nickname != null)
+                loginText.Text = nickname;
         }
 
         private void Login(object sender, RoutedEventArgs e)
@@ -64,19 +72,18 @@ namespace ClientForms
 
         private void ConnectParticipant(Participant participant)
         {
-            new Thread(() =>
+            try
             {
-                try
+                if (nickname == null)
                 {
-                    string nickname = null;
                     Dispatcher.Invoke(() => nickname = loginText.Text);
-                    TryToConnectParticipant(participant, nickname);
                 }
-                catch (NicknameAlreadyExistException exception)
-                {
-                    Dispatcher.Invoke(() => ConnectingIssuesText(exception.Message));
-                }
-            }).Start();
+                TryToConnectParticipant(participant, nickname);
+            }
+            catch (NicknameAlreadyExistException exception)
+            {
+                Dispatcher.Invoke(() => ConnectingIssuesText(exception.Message));
+            }
         }
 
         private void TryToConnectParticipant(Participant participant, string nickname)
@@ -105,6 +112,11 @@ namespace ClientForms
         public Participant GetParticipant()
         {
             return participant;
+        }
+
+        public TcpClient GetClient()
+        {
+            return client;
         }
 
         private void EnterKeyPress(object sender, KeyEventArgs e)

@@ -35,7 +35,7 @@ namespace Chat
         {
             if (CheckNickname(participant.Nickname))
             {
-                Broadcast(new Message(participant.Nickname + " has joined"));
+                Broadcast(new Message(participant.Nickname + " has joined$2019#$"));
                 participant.OnLeave = Leave;
                 participants.Add(participant);
                 return true;
@@ -56,6 +56,16 @@ namespace Chat
                     return false;
             }
             return true;
+        }
+
+        public string GetParticipantsNicknames()
+        {
+            string result = null;
+            foreach(var participant in participants)
+            {
+                result += participant.Nickname + "\n";
+            }
+            return result;
         }
     }
 }
