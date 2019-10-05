@@ -40,5 +40,25 @@ namespace Chat
         {
            return message == writeList.Dequeue();
         }
+
+        public IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int EndRead(IAsyncResult asyncResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EndWrite(IAsyncResult asyncResult)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

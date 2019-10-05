@@ -10,7 +10,7 @@ namespace Chat
         private readonly IChannel channel;
         private int readCount = 0;
         private byte[] readBuffer = new byte[255];
-        
+
 
         public Participant(IChannel channel)
         {
@@ -34,6 +34,7 @@ namespace Chat
             {
                 EnsureReadBufferCapacity();
                 int count = channel.Read(readBuffer, readCount, readBuffer.Length - readCount);
+
                 if (count == 0)
                 {
                     OnLeave?.Invoke(this);
@@ -43,6 +44,46 @@ namespace Chat
             }
             return GetMessage(end);
         }
+
+        public void BeginReceive(Action<Message> onMessage, Action<Exception> onError)
+        {
+            int end;
+
+            if ((end = GetEndIndex()) >= 0)
+            {
+                onMessage(GetMessage(end));
+                return;
+            }
+
+            EnsureReadBufferCapacity();
+            channel.BeginRead(readBuffer, readCount ,readBuffer.Length-readCount, OnReadCompleteWithErrorHandling, null);
+
+            void OnReadCompleteWithErrorHandling(IAsyncResult asyncResult)
+            {
+                try
+                {
+                    OnReadComplete(asyncResult);
+                }
+                catch(System.IO.IOException exception)
+                {
+                    onError(exception);
+                }
+            }
+
+            void OnReadComplete(IAsyncResult asyncResult)
+            {
+                var count = channel.EndRead(asyncResult);
+                if (count == 0)
+                {
+                    OnLeave?.Invoke(this);
+                    onError(new CantReadException());
+                    return;
+                }
+                readCount += count;
+                BeginReceive(onMessage, onError);
+            }
+        }
+        
 
         private void EnsureReadBufferCapacity()
         {
