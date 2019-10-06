@@ -11,6 +11,7 @@ namespace Server
     {
         static TcpListener listen;
         static Room room = new Room();
+        static Participant participant;
 
         static void Main(string[] args)
         {
@@ -27,50 +28,59 @@ namespace Server
                 Console.WriteLine("Server: Waiting...");
                 TcpClient client = listen.AcceptTcpClient();
                 Console.WriteLine("Server: Waited");
-                ConnectClient(client);
+                BeginConnectClient(client);
             }
         }
 
-        private static void ConnectClient(TcpClient client)
+        private static void BeginConnectClient(TcpClient client)
         {
-            var participant = new Participant(new TCPChannel(client.GetStream()));
-            new Thread(() =>
+            participant = new Participant(new TCPChannel(client.GetStream()));
+            TryToReceive(participant);
+        }
+
+        private static void TryToReceive(Participant participant)
+        {
+            participant.BeginReceive(OnReceiveMessage, OnError);
+        }
+
+        private static void OnReceiveMessage(Message message)
+        {
+            participant.Nickname = message.ToString();
+            if (room.Join(participant))
             {
-                while (true)
+                Console.WriteLine("--" + participant.Nickname + "--");
+                participant.BeginSend(new Message("Yes"), () =>
                 {
-
-                    participant.Nickname = participant.Receive().ToString();
-                    if (room.Join(participant))
+                    participant.BeginSend(new Message(room.GetParticipantsNicknames()), () =>
                     {
-                        Console.WriteLine("--" + participant.Nickname + "--");
-                        participant.Send(new Message("Yes"));
-                        participant.Send(new Message(room.GetParticipantsNicknames()));
-                        break;
-                    }
-                    participant.Send(new Message("No"));
-
-                }
-                BroadcastMessage(participant);
-            }).Start();
+                        BroadcastMessage(participant);
+                    }, OnError);
+                }, OnError);
+            }
+            else
+            {
+                participant.BeginSend(new Message("No"), () =>
+                {
+                    TryToReceive(participant);
+                }, OnError);
+            }
         }
 
         private static void BroadcastMessage(Participant participant)
         {
-            while (true)
+            participant.BeginReceive(messageReceived =>
             {
-                try
-                {
-                    Message message = participant.Receive();
-                    room.Broadcast(new Message(participant.Nickname + ": " + message));
-                }
-                catch (Exception exception)
-                {
-                    if (exception is System.IO.IOException || exception is CantReadException)
-                    {
-                        room.Broadcast(new Message(participant.Nickname + " left from chat$2019#$"));
-                        return;
-                    }
-                }
+                room.Broadcast(new Message(participant.Nickname + ": " + messageReceived));
+                BroadcastMessage(participant);
+            }, OnError);
+        }
+
+        private static void OnError(Exception exception)
+        {
+            if (exception is System.IO.IOException || exception is CantReadException)
+            {
+                room.Broadcast(new Message(participant.Nickname + " left from chat$2019#$"));
+                return;
             }
         }
     }

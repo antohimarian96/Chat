@@ -78,11 +78,38 @@ namespace ClientForms
                 {
                     Dispatcher.Invoke(() => nickname = loginText.Text);
                 }
-                TryToConnectParticipant(participant, nickname);
+                BeginTryToConnectParticipant(participant, nickname);
             }
             catch (NicknameAlreadyExistException exception)
             {
                 Dispatcher.Invoke(() => ConnectingIssuesText(exception.Message));
+            }
+        }
+
+        private void BeginTryToConnectParticipant(Participant participant, string nickname)
+        {
+            participant.Send(new Message(nickname));
+            participant.BeginReceive(OnMessage, OnError);
+        }
+
+        private void OnError(Exception exception)
+        {
+            Exception thrownException = new Exception(exception.Message, exception);
+            throw thrownException;
+        }
+
+        private void OnMessage(Message message)
+        {
+            string confirmationMessage = message.ToString();
+            if (confirmationMessage == "No")
+            {
+                Dispatcher.Invoke(() => loginText.Text = default(string));
+                throw new NicknameAlreadyExistException();
+            }
+            else
+            {
+                participant.Nickname = nickname;
+                Dispatcher.Invoke(() => Close());
             }
         }
 

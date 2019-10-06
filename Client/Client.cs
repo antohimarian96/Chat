@@ -20,40 +20,19 @@ namespace Client
 
             participant = new Participant(new TCPChannel(client.GetStream()));
             BeginConnect(participant);
-
-            BeginWrite(participant);
-        }
-
-        private static void ConnectClient(Participant participant)
-        {
-            while (participant.Nickname == null)
-            {
-                Console.Write("Nickname: ");
-                nickname = Console.ReadLine();
-                participant.Send(new Message(nickname));
-                string confirmationMessage = participant.Receive().ToString();
-
-                if (confirmationMessage == "Yes")
-                {
-                    participant.Nickname = nickname;
-                    Console.WriteLine("Accepted");
-                }
-                else
-                {
-                    Console.WriteLine("Try again");
-                }
-            }
         }
 
         private static void BeginConnect(Participant participant)
         {
             Console.Write("Nickname: ");
             nickname = Console.ReadLine();
-            participant.Send(new Message(nickname));
-            participant.BeginReceive(OnMessage, OnError);
+            participant.BeginSend(new Message(nickname), () =>
+            {
+                participant.BeginReceive(OnReceiveConfirmationMessage, OnError);
+            }, OnError);
         }
 
-        private static void OnMessage(Message message)
+        private static void OnReceiveConfirmationMessage(Message message)
         {
             string confirmationMessage = message.ToString();
             if (confirmationMessage == "Yes")
@@ -61,6 +40,7 @@ namespace Client
                 participant.Nickname = nickname;
                 Console.WriteLine("Accepted");
                 Receive(participant);
+                BeginWrite(participant);
             }
             else
             {
@@ -70,36 +50,28 @@ namespace Client
 
         private static void OnError(Exception exception)
         {
-            throw new System.IO.IOException();
-        }
-
-        private static void Receive(Participant participant)
-        {
-            try
-            {
-                participant.BeginReceive(message =>
-                {
-                    Console.WriteLine(message);
-                    Receive(participant);
-                }, OnError);
-            }
-            catch (System.IO.IOException)
+            if(exception is System.IO.IOException)
             {
                 Console.WriteLine("Server offline");
                 Console.ReadLine();
             }
         }
 
+        private static void Receive(Participant participant)
+        {
+            participant.BeginReceive(message =>
+            {
+                Console.WriteLine(message);
+                Receive(participant);
+            }, OnError);
+        }
+
         private static void BeginWrite(Participant participant)
         {
-            new Thread(() =>
+            participant.BeginSend(new Message(Console.ReadLine()), () =>
             {
-                while (true) 
-                {
-                    Message message = new Message(Console.ReadLine());
-                    participant.Send(message);
-                }
-            }).Start();
+                BeginWrite(participant);
+            }, OnError);
         }
     }
 }

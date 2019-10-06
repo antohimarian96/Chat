@@ -68,6 +68,10 @@ namespace Chat
                 {
                     onError(exception);
                 }
+                catch(ObjectDisposedException exception)
+                {
+                    onError(exception);
+                }
             }
 
             void OnReadComplete(IAsyncResult asyncResult)
@@ -83,7 +87,26 @@ namespace Chat
                 BeginReceive(onMessage, onError);
             }
         }
-        
+
+        public void BeginSend(Message message, Action onMessage, Action<Exception> onError)
+        {
+            byte[] buffer = message.ToByte();
+            channel.BeginWrite(buffer, 0, buffer.Length, OnWriteMessage, null);
+
+            void OnWriteMessage(IAsyncResult asyncResult)
+            {
+                try
+                {
+                    channel.EndWrite(asyncResult);
+                    onMessage();
+                }
+                catch (Exception exception)
+                {
+                    onError(exception);
+                }
+            }
+            
+        }
 
         private void EnsureReadBufferCapacity()
         {

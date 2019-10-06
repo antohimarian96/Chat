@@ -30,7 +30,7 @@ namespace ClientForms
             InitializeComponent();
         }
 
-        private void BeginReceive(Participant participant)
+        private void Receive(Participant participant)
         {
             new Thread(() =>
             {
@@ -42,7 +42,7 @@ namespace ClientForms
                         if (CheckOnlineParticipants(text))
                             UpdateOnlineParticipants();
                         text = CheckSpecialMessage(text);
-                        Dispatcher.Invoke(() => 
+                        Dispatcher.Invoke(() =>
                         {
                             messageChatBox.Text += text + "\n";
                             messageIssues.Text = string.Empty;
@@ -55,6 +55,35 @@ namespace ClientForms
                     catch (ObjectDisposedException) { return; }
                 }
             }).Start();
+        }
+
+        private void BeginReceive(Participant participant)
+        {
+            participant.BeginReceive(value =>
+            {
+                string text = value.ToString();
+                if (CheckOnlineParticipants(text))
+                    UpdateOnlineParticipants();
+                text = CheckSpecialMessage(text);
+                Dispatcher.Invoke(() =>
+                {
+                    messageChatBox.Text += text + "\n";
+                    messageIssues.Text = string.Empty;
+                });
+                BeginReceive(participant);
+            }, OnErrorMessageBox);
+        }
+
+        private void OnErrorMessageBox(Exception exception)
+        {
+            if (exception is System.IO.IOException)
+            {
+                LoginAgain(participant);
+            }
+            if (exception is ObjectDisposedException)
+            {
+                return;
+            }
         }
 
         private void LoginAgain(Participant participant)
@@ -148,11 +177,35 @@ namespace ClientForms
             }
             else
             {
-                GetOnlineParticipants();
-                Show();
-                BeginReceive(participant);
+                participant.BeginReceive(OnParticipants, OnError);
             }
         }
+
+        private void OnError(Exception exception)
+        {
+            if (exception is ObjectDisposedException)
+            {
+                return;
+            }
+        }
+
+        private void OnParticipants(Message message)
+        {
+            string receiveServerMessage = message.ToString();
+            string[] nicknames = receiveServerMessage.Split('\n');
+            foreach (var nickname in nicknames)
+            {
+                if (nickname != "")
+                    onlineParticipants.Add(nickname);
+            }
+            Dispatcher.Invoke(() =>
+            {
+                participantsBox.Text = receiveServerMessage.TrimEnd('\n');
+                Show();
+            });
+            BeginReceive(participant);
+        }
+
 
         private void GetOnlineParticipants()
         {
@@ -194,7 +247,7 @@ namespace ClientForms
             {
                 client.Close();
             }
-            catch(NullReferenceException)
+            catch (NullReferenceException)
             {
                 Application.Current.Shutdown();
             }
