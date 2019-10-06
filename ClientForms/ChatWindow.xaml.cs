@@ -30,33 +30,6 @@ namespace ClientForms
             InitializeComponent();
         }
 
-        private void Receive(Participant participant)
-        {
-            new Thread(() =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        string text = participant.Receive().ToString();
-                        if (CheckOnlineParticipants(text))
-                            UpdateOnlineParticipants();
-                        text = CheckSpecialMessage(text);
-                        Dispatcher.Invoke(() =>
-                        {
-                            messageChatBox.Text += text + "\n";
-                            messageIssues.Text = string.Empty;
-                        });
-                    }
-                    catch (System.IO.IOException)
-                    {
-                        LoginAgain(participant);
-                    }
-                    catch (ObjectDisposedException) { return; }
-                }
-            }).Start();
-        }
-
         private void BeginReceive(Participant participant)
         {
             participant.BeginReceive(value =>
@@ -140,23 +113,28 @@ namespace ClientForms
 
         private void BeginWrite(Participant participant, string text)
         {
-            new Thread(() =>
+            try
             {
-                try
+                if (text == string.Empty)
                 {
-                    if (text == string.Empty)
-                    {
-                        throw new EmptyMessageException();
-                    }
-                    Message message = new Message(text);
-                    participant.Send(message);
+                    throw new EmptyMessageException();
+                }
+                Message message = new Message(text);
+                participant.BeginSend(message, () =>
+                {
                     Dispatcher.Invoke(() => messageBox.Text = string.Empty);
-                }
-                catch (EmptyMessageException exception)
-                {
-                    Dispatcher.Invoke(() => ShowMessageIssues(exception.Message));
-                }
-            }).Start();
+                }, OnBeginWriteError);
+            }
+            catch(EmptyMessageException exception)
+            {
+                OnBeginWriteError(exception);
+            }
+        }
+
+        private void OnBeginWriteError(Exception exception)
+        {
+            if(exception is EmptyMessageException)
+                Dispatcher.Invoke(() => ShowMessageIssues(exception.Message));
         }
 
         private void MessageChatBox_Loaded(object sender, RoutedEventArgs e)

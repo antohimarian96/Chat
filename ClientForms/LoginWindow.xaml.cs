@@ -72,60 +72,49 @@ namespace ClientForms
 
         private void ConnectParticipant(Participant participant)
         {
-            try
+            if (nickname == null)
             {
-                if (nickname == null)
-                {
-                    Dispatcher.Invoke(() => nickname = loginText.Text);
-                }
-                BeginTryToConnectParticipant(participant, nickname);
+                Dispatcher.Invoke(() => nickname = loginText.Text);
             }
-            catch (NicknameAlreadyExistException exception)
-            {
-                Dispatcher.Invoke(() => ConnectingIssuesText(exception.Message));
-            }
+            BeginTryToConnectParticipant(participant, nickname);
         }
 
         private void BeginTryToConnectParticipant(Participant participant, string nickname)
         {
-            participant.Send(new Message(nickname));
-            participant.BeginReceive(OnMessage, OnError);
-        }
-
-        private void OnError(Exception exception)
-        {
-            Exception thrownException = new Exception(exception.Message, exception);
-            throw thrownException;
+            participant.BeginSend(new Message(nickname),()=>
+            {
+                participant.BeginReceive(OnMessage, exception => { throw exception; });
+            },OnError);
         }
 
         private void OnMessage(Message message)
         {
-            string confirmationMessage = message.ToString();
-            if (confirmationMessage == "No")
+            try
             {
-                Dispatcher.Invoke(() => loginText.Text = default(string));
-                throw new NicknameAlreadyExistException();
+                string confirmationMessage = message.ToString();
+                if (confirmationMessage == "No")
+                {
+                    Dispatcher.Invoke(() => loginText.Text = default(string));
+                    throw new NicknameAlreadyExistException();
+                }
+                else
+                {
+                    participant.Nickname = nickname;
+                    Dispatcher.Invoke(() => Close());
+                }
             }
-            else
+            catch(Exception exception)
             {
-                participant.Nickname = nickname;
-                Dispatcher.Invoke(() => Close());
+                OnError(exception);
             }
         }
 
-        private void TryToConnectParticipant(Participant participant, string nickname)
+        private void OnError(Exception exception)
         {
-            participant.Send(new Message(nickname));
-            string confirmationMessage = participant.Receive().ToString();
-            if (confirmationMessage == "No")
+            if (exception is NicknameAlreadyExistException)
             {
-                Dispatcher.Invoke(() => loginText.Text = default(string));
-                throw new NicknameAlreadyExistException();
-            }
-            else
-            {
-                participant.Nickname = nickname;
-                Dispatcher.Invoke(() => Close());
+                Dispatcher.Invoke(() => ConnectingIssuesText(exception.Message));
+                nickname = null;
             }
         }
 
